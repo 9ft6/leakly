@@ -1,7 +1,10 @@
 .idea/
 .run/
 venv/
+.venv/
+.venv/*
 */**/__pycache__/
+__pycache__/*
 */**/*egg-info/
 .coverage
 build/
@@ -14,4 +17,6 @@ temp/
 /*/**/node_modules/
 lefthook.yml
 env/*
+data/*
 !env/*.*.*
+/.venv/
