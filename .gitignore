@@ -1,0 +1,17 @@
+.idea/
+.run/
+venv/
+*/**/__pycache__/
+*/**/*egg-info/
+.coverage
+build/
+dist/
+tests/.coverage
+.env
+.pytest_cache
+temp/
+**/*.log
+/*/**/node_modules/
+lefthook.yml
+env/*
+!env/*.*.*
