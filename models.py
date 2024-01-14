@@ -1,3 +1,5 @@
+import json
+
 from pydantic import BaseModel
 
 
@@ -39,9 +41,14 @@ class Strain(BaseModel):
     thc: float | None
     topEffect: str | None
 
+    comments: list[str] = []
+
     cannabinoids: dict[str, Cannabinoid]
     effects: dict[str, Effect]
     terps: dict[str, Terp]
+
+    def __str__(self):
+        return json.dumps(self.dict(), indent=4)
 
     def __hash__(self):
         return self.id
@@ -49,3 +56,33 @@ class Strain(BaseModel):
 
 class Strainlist(BaseModel):
     strains: list[Strain]
+
+
+class User(BaseModel):
+    id: int
+    avatar: str | None
+    profileImageUrl: str | None
+    publicId: str
+    userSince: str
+    username: str
+
+
+class Comment(BaseModel):
+    id: int
+    avatar: str | None
+    consumptionMethod: str | None
+    created: str | None
+    form: str | None
+    isPrivate: bool
+    language: str
+    moderationStatus: str
+    potency: dict | None
+    rating: int
+    reportedBenefits: list[str]
+    reportedFeelings: list[str]
+    reportedFlavors: list[str]
+    reportedNegatives: list[str]
+    strainSlug: str
+    text: str
+    upvotesCount: int
+    user: User

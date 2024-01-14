@@ -2,8 +2,7 @@ from dataset import Strains
 
 
 def main():
-    strains = Strains()
-    strains.show()
+    Strains()
 
 
 if __name__ == '__main__':

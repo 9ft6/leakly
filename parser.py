@@ -1,26 +1,18 @@
 import asyncio
 import aiohttp
-import json
 
 from logger import logger
-from config import cfg
 from client import Client
 
 
 class Parser:
-    def __init__(self):
-        ...
+    def __init__(self, dataset):
+        self.dataset = dataset
 
     def run(self):
-        asyncio.run(self._run())
+        return asyncio.run(self._run())
 
     async def _run(self):
-        logger.info("Starting parser")
-
+        logger.info("Starting strains parser")
         async with aiohttp.ClientSession() as session:
-            client = Client(session)
-            self.dump(await client.get_strains())
-
-    def dump(self, strains):
-        with open(cfg.dump_name, "w") as f:
-            json.dump({k: v.dict() for k, v in strains.items()}, f)
+            return await Client(session).get_strains(self.dataset)

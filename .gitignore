@@ -1,6 +1,7 @@
 .idea/
 .run/
 venv/
+backups/
 .venv/
 .venv/*
 */**/__pycache__/
@@ -20,3 +21,4 @@ env/*
 data/*
 !env/*.*.*
 /.venv/
+/telegraph.txt
