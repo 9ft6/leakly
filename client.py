@@ -13,50 +13,39 @@ class Client:
     def __init__(self, session: aiohttp.ClientSession):
         self.session = session
 
-    async def get_comments_by_strain(self, strain: Strain, dataset) -> list[Comment]:
-        response, status = await self._make_request(self.get_comment_url(strain))
+    async def get_comments_by_strain(self, strain: Strain):
+        url, params = self.get_comment_url(strain)
+        response, status = await self._make_request(url, params=params)
         total = response["metadata"]["totalCount"]
-        step = cfg.items_per_page
-        if parsed := dataset.get_by_slug(strain.slug):
-            print(f'{strain.slug} - {total=} {type(total)=} {len(parsed.comments)=}')
-            if total == len(parsed.comments):
-                return parsed.comments
-
-        tasks = [i for i in range(0, total, step)]
-        tasks = [self.get_comments_page(strain, s) for s in tasks]
-
+        tasks = [self.get_comments_page(strain, s) for s in range(0, total, cfg.comments_one_time)]
         comments = []
         for result in await asyncio.gather(*tasks):
             comments.extend(result)
 
-        logger.debug(f"{strain.slug} {len(comments)=}")
-        return comments
+        strain.comments = comments
 
     async def get_comments_page(self, strain: Strain, skip: int = 0) -> list[Comment]:
-        response, status = await self._make_request(self.get_comment_url(strain, skip=skip))
-        return [Comment(**c) for c in response["data"]]
+        url, params = self.get_comment_url(strain, skip=skip)
+        response, status = await self._make_request(url, params=params)
+        return [Comment(**c) for c in response["data"]] if response else []
 
     async def get_strains(self, dataset):
-        strains = {}
-        response, status = await self._make_request(self.get_strain_url())
+        url, params = self.get_strain_url()
+        response, status = await self._make_request(url, params=params)
         total = response["metadata"]["totalCount"]
         step = cfg.pages_one_time * cfg.items_per_page
         for n in range(0, total, step):
             tasks = [(i + 1) * cfg.items_per_page + n for i in range(cfg.pages_one_time)]
             tasks = [self.get_strain_page(s) for s in tasks]
-            for result in await asyncio.gather(*tasks):
-                for s in result.values():
-                    s.comments = await self.get_comments_by_strain(s, dataset)
-                strains.update(result)
+            result = await asyncio.gather(*tasks)
+            [dataset.put_strains(r) for r in result]
 
-            logger.success(f"{len(strains)=}")
-
-        return strains
-
-    async def get_strain_page(self, skip: int = 0) -> dict:
-        response, status = await self._make_request(self.get_strain_url(skip=skip))
+    async def get_strain_page(self, skip: int = 0) -> list:
+        url, params = self.get_strain_url(skip=skip)
+        response, status = await self._make_request(url, params=params)
         strains = [Strain(**s) for s in response["hits"]["strain"]]
-        return {s.id: s for s in strains}
+        await asyncio.gather(*[self.get_comments_by_strain(s) for s in strains])
+        return strains
 
     async def _make_request(self, url, method="GET", attempts=cfg.request_attempts, **kwargs):
         while attempts:
@@ -92,6 +81,7 @@ class Client:
                 aiohttp.ClientResponseError,
                 aiohttp.ServerDisconnectedError,
                 asyncio.TimeoutError,
+                ValueError,
             ) as error:
                 attempts -= 1
                 logger.warning(f"{url}: Got an error {error} during GET request")
@@ -104,9 +94,21 @@ class Client:
         return None, None
 
     def get_strain_url(self, skip: int = 0, take: int = cfg.items_per_page):
-        return (f"{cfg.host}{cfg.strain_url}?enableNewFilters=true&skip={skip}"
-                f"&strain_playlist=&take={take}&sort[0][strain_name]=asc")
+        url = f"{cfg.host}{cfg.strain_url}"
+        params = {
+            "enableNewFilters": "true",
+            "skip": skip,
+            "strain_playlist": "",
+            "take": take,
+            "sort[0][strain_name]": "asc"
+        }
+        return url, params
 
     def get_comment_url(self, strain: Strain, skip: int = 0, take: int = cfg.items_per_page):
-        return (f"{cfg.host}{cfg.comment_url}/{strain.slug}/reviews?skip={skip}"
-                f"&take={take}&sort[0][upvotes_count]=desc")
+        url = f"{cfg.host}{cfg.comment_url}/{strain.slug}/reviews"
+        params = {
+            "skip": skip,
+            "take": take,
+            "sort[0][upvotes_count]": "desc"
+        }
+        return url, params
