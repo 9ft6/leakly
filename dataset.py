@@ -79,9 +79,10 @@ class Strains():
         self.dump()
         return exists
 
-    def show(self):
+    def show(self, _filter=None):
         for strain in self.items.values():
-            logger.info(strain)
+            if not _filter or _filter(strain):
+                logger.info(strain)
 
     def export(self):
         with open('export.json', 'w') as file:

@@ -78,8 +78,10 @@ class Strain(BaseModel):
     terps: dict[str, Terp]
 
     def __str__(self):
-        #return json.dumps(self.dict(), indent=4)
-        return f"{len(self.comments):<5} - {self.slug}"
+        result = self.dict()
+        del result["comments"]
+        return json.dumps(result, indent=4)
+        # return f"{len(self.comments):<5} - {self.slug}"
 
     def __hash__(self):
         return self.id
