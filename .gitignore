@@ -19,6 +19,7 @@ temp/
 lefthook.yml
 env/*
 data/*
+_data/*
 !env/*.*.*
 /.venv/
 /telegraph.txt

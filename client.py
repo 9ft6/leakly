@@ -4,14 +4,17 @@ import aiohttp
 
 from models import Strain, Comment
 from config import cfg
+from dataset import Strains
 from logger import logger
 
 
 class Client:
     session: aiohttp.ClientSession
+    dataset: Strains
 
-    def __init__(self, session: aiohttp.ClientSession):
+    def __init__(self, session: aiohttp.ClientSession, dataset):
         self.session = session
+        self.dataset = dataset
 
     async def get_comments_by_strain(self, strain: Strain):
         url, params = self.get_comment_url(strain)
@@ -29,20 +32,36 @@ class Client:
         response, status = await self._make_request(url, params=params)
         return [Comment(**c) for c in response["data"]] if response else []
 
-    async def get_strains(self, dataset):
-        url, params = self.get_strain_url()
-        response, status = await self._make_request(url, params=params)
+    async def update(self):
+        logger.info("Checking for updates...")
+        # checking 1 page to understand that there are new strains
+        response = await self._get_strain_page_response(0)
+        newest = await self._parse_strain_page_response(response)
+        if self.dataset.put_strains(newest):
+            logger.info("New strains at 1 page not found. Parse aborting...")
+            return
+
+        logger.info("Starting strains parser...")
         total = response["metadata"]["totalCount"]
         step = cfg.pages_one_time * cfg.items_per_page
-        for n in range(0, total, step):
+        for n in range(1, total, step):
             tasks = [(i + 1) * cfg.items_per_page + n for i in range(cfg.pages_one_time)]
-            tasks = [self.get_strain_page(s) for s in tasks]
+            tasks = [self.parse_strain_page(s) for s in tasks]
             result = await asyncio.gather(*tasks)
-            [dataset.put_strains(r) for r in result]
+            if any([self.dataset.put_strains(r) for r in result]):
+                break
 
-    async def get_strain_page(self, skip: int = 0) -> list:
+    async def parse_strain_page(self, skip: int = 0) -> list:
+        if response := await self._get_strain_page_response(skip):
+            return await self._parse_strain_page_response(response)
+
+    async def _get_strain_page_response(self, skip: int = 0) -> dict:
         url, params = self.get_strain_url(skip=skip)
         response, status = await self._make_request(url, params=params)
+        if status < 300:
+            return response
+
+    async def _parse_strain_page_response(self, response: dict) -> list:
         strains = [Strain(**s) for s in response["hits"]["strain"]]
         await asyncio.gather(*[self.get_comments_by_strain(s) for s in strains])
         return strains
@@ -100,7 +119,7 @@ class Client:
             "skip": skip,
             "strain_playlist": "",
             "take": take,
-            "sort[0][strain_name]": "asc"
+            "sort[0][created]": "desc"
         }
         return url, params
 

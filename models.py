@@ -25,39 +25,6 @@ class Terp(BaseModel):
     score: float
 
 
-class Strain(BaseModel):
-    id: int
-    averageRating: float
-    category: str
-    flowerImageSvg: str
-    name: str
-    nugImage: str
-    phenotype: str | None
-    reviewCount: int
-    shortDescriptionPlain: str | None
-    slug: str
-    strainTopTerp: str | None
-    subtitle: str | None
-    thc: float | None
-    topEffect: str | None
-
-    comments: list[str] = []
-
-    cannabinoids: dict[str, Cannabinoid]
-    effects: dict[str, Effect]
-    terps: dict[str, Terp]
-
-    def __str__(self):
-        return json.dumps(self.dict(), indent=4)
-
-    def __hash__(self):
-        return self.id
-
-
-class Strainlist(BaseModel):
-    strains: list[Strain]
-
-
 class User(BaseModel):
     id: int
     avatar: str | None
@@ -86,3 +53,37 @@ class Comment(BaseModel):
     text: str
     upvotesCount: int
     user: User
+
+
+class Strain(BaseModel):
+    id: int
+    averageRating: float
+    category: str
+    flowerImageSvg: str
+    name: str
+    nugImage: str
+    phenotype: str | None
+    reviewCount: int
+    shortDescriptionPlain: str | None
+    slug: str
+    strainTopTerp: str | None
+    subtitle: str | None
+    thc: float | None
+    topEffect: str | None
+
+    comments: list[Comment] = []
+
+    cannabinoids: dict[str, Cannabinoid]
+    effects: dict[str, Effect]
+    terps: dict[str, Terp]
+
+    def __str__(self):
+        #return json.dumps(self.dict(), indent=4)
+        return f"{len(self.comments):<5} - {self.slug}"
+
+    def __hash__(self):
+        return self.id
+
+
+class Strainlist(BaseModel):
+    strains: list[Strain]

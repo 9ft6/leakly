@@ -2,7 +2,7 @@
 
 **Description:**
 
-This is a high-speed, asynchronous parser for the cannabis enthusiast community platform, Leafly.com. The parser is built using `aiohttp` for asynchronous web requests and leverages `pydantic` for model serialization. Its primary purpose is to gather information on cannabis strains and their associated comments. The parser allows for strain updates using the `-u` or `--update` flag. A complete dataset of strains and comments can be collected in approximately 10 minutes.
+This is a high-speed, asynchronous parser for the cannabis enthusiast community platform, Leafly.com. The parser is built using `aiohttp` for asynchronous web requests and leverages `pydantic` for model serialization. Its primary purpose is to gather information on cannabis strains and their associated comments. The parser allows for strain updates using the `-u` or `--update` flag. A complete dataset of strains(7k+) and comments(350k+) can be collected in approximately 2 minutes.
 
 **Features:**
 - **Asynchronous Parsing:** Utilizes `aiohttp` for efficient and fast asynchronous web scraping.
@@ -13,6 +13,7 @@ This is a high-speed, asynchronous parser for the cannabis enthusiast community 
 - **Database Migration:** Transition from a basic pickle storage to a more robust database system, possibly MongoDB.
 - **GUI Interface:** Implementation of a graphical user interface for easy browsing and interaction with the database.
 - **Graphical Analysis:** Integration of Jupyter Notebooks for graph creation and analysis.
+- **Intelligent Parsing Termination:** The parser now includes a feature to automatically stop if it detects that all strains on the current page have already been collected in the database, ensuring efficiency and preventing unnecessary data retrieval.
 
 **Usage:**
 - To update strains: `-u` or `--update` flags.
@@ -26,7 +27,7 @@ This is a high-speed, asynchronous parser for the cannabis enthusiast community 
 **Project Structure:**
 - `main.py`: The main script for executing the parser.
 - `models.py`: Contains `pydantic` models for efficient data serialization.
-- `parser.py`: Implements the asynchronous parser using `aiohttp`.
+- `client.py`: Implements the asynchronous parser using `aiohttp`.
 - `database.py`: Placeholder for future database integration.
 
 **Installation:**
